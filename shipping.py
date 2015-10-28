@@ -49,7 +49,7 @@ class Address(object):
         self.address2 = address2 or ''
         self.city = city or ''
         self.state = state or ''
-        self.zip = re.sub('[^\w]', '', unicode(zip).split('-')[0]) if zip else ''
+        self.zip = zip if zip else ''
         self.country = country or ''
         self.phone = re.sub('[^0-9]*', '', unicode(phone)) if phone else ''
         self.email = email or ''
