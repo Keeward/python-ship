@@ -34,6 +34,7 @@ SERVICES = [
     ('08', 'UPS Worldwide Expedited'),
     ('54', 'UPS Worldwide Express Plus'),
     ('96', 'UPS Worldwide Express Freight'),
+    ('M4', 'Domestic Expedited Mail Innovations')
 ]
 
 PACKAGES = [
@@ -45,6 +46,7 @@ PACKAGES = [
     ('2a', 'Small Express Box'),
     ('2b', 'Medium Express Box'),
     ('2c', 'Large Express Box'),
+    ('64', 'BPM Parcel')
 ]
 
 LABEL_TYPE = [
@@ -137,8 +139,12 @@ class UPS(object):
         return SoapClient(wsdl=wsdl_url, trace=True)
 
     def _create_shipment(self, client, packages, shipper_address, recipient_address, box_shape, namespace='ns3', create_reference_number=True, can_add_delivery_confirmation=True):
+        return self._create_shipment(client, packages, shipper, shipper, recipient, packaging_type, namespace, create_reference_number,can_add_delivery_confirmation)
+
+    def _create_shipment(self, client, packages, shipper_address, ship_from_address, recipient_address, box_shape, namespace='ns3', create_reference_number=True, can_add_delivery_confirmation=True, USPSEndorsement='', costCenter='', packageID=''):
         shipment = client.factory.create('{0}:ShipmentType'.format(namespace))
         shipper_country = self._normalized_country_code(shipper_address.country)
+        ship_from_country = self._normalized_country_code(ship_from_address.country)
 
         for i, p in enumerate(packages):
       	    package = client.factory.create('{0}:PackageType'.format(namespace))
@@ -186,16 +192,16 @@ class UPS(object):
         shipment.Shipper.Address.PostalCode = shipper_address.zip
         shipment.Shipper.Address.CountryCode = shipper_country
         shipment.Shipper.ShipperNumber = self.credentials['shipper_number']
-        
+
         # Fill in ShipFrom information
-        shipfrom_name = shipper_address.name[:35]
-        shipfrom_company = shipper_address.company_name[:35]
+        shipfrom_name = ship_from_address.name[:35]
+        shipfrom_company = ship_from_address.company_name[:35]
         shipment.ShipFrom.Name = shipfrom_company or shipfrom_name
-        shipment.ShipFrom.Address.AddressLine = [ shipper_address.address1, shipper_address.address2 ]
-        shipment.ShipFrom.Address.City = shipper_address.city[:30]
-        shipment.ShipFrom.Address.PostalCode = shipper_address.zip
-        shipment.ShipFrom.Address.CountryCode = shipper_country
-        
+        shipment.ShipFrom.Address.AddressLine = [ ship_from_address.address1, ship_from_address.address2 ]
+        shipment.ShipFrom.Address.City = ship_from_address.city[:30]
+        shipment.ShipFrom.Address.PostalCode = ship_from_address.zip
+        shipment.ShipFrom.Address.CountryCode = ship_from_country
+
         # Fill in ShipTo information
         shipto_name = recipient_address.name[:35]
         shipto_company = recipient_address.company_name[:35]
@@ -215,7 +221,12 @@ class UPS(object):
 
         if recipient_address.is_residence:
             shipment.ShipTo.Address.ResidentialAddressIndicator = ''
-        
+
+        shipment.USPSEndorsement = USPSEndorsement
+        shipment.CostCenter = costCenter
+        shipment.PackageID = packageID
+
+
         return shipment
 
     def rate(self, packages, packaging_type, shipper, recipient):
@@ -263,7 +274,7 @@ class UPS(object):
         client = self._get_client('XAV.wsdl')
         #client = self.soapClient('XAV.wsdl')
         #wsdl_url = self.wsdlURL('XAV.wsdl')
-        #client = SoapClient(wsdl = wsdl_url, trace=True)
+        #clifent = SoapClient(wsdl = wsdl_url, trace=True)
         #return client
         
         self._add_security_header(client)
@@ -313,8 +324,15 @@ class UPS(object):
             return result
         except suds.WebFault as e:
             raise UPSError(e.fault, e.document)
-    
-    def label(self, packages, shipper_address, recipient_address, service, box_shape, validate_address, email_notifications=list(), create_commercial_invoice=False, customs_info=[], label_type=LABEL_TYPE[0][0]):
+
+    def label(self, packages, shipper_address,recipient_address, service, box_shape, validate_address, email_notifications=list(), create_commercial_invoice=False, customs_info=[], label_type=LABEL_TYPE[0][0],USPSEndorsement='', costCenter='', packageID=''):
+        self.label(packages, shipper_address, shipper_address, recipient_address, service, box_shape, validate_address, email_notifications=list(), create_commercial_invoice=False, customs_info=[], label_type=label_type,USPSEndorsement=USPSEndorsement, costCenter=costCenter, packageID=packageID)
+
+
+    def label(self, packages, shipper_address, ship_from_address, recipient_address, service, box_shape, validate_address, email_notifications=list(), create_commercial_invoice=False, customs_info=[], label_type=LABEL_TYPE[0][0],USPSEndorsement='', costCenter='', packageID=''):
+        print 'debug in UPS'
+        print self.debug
+
         client = self._get_client('Ship.wsdl')
         self._add_security_header(client)
         if not self.debug:
@@ -325,7 +343,7 @@ class UPS(object):
         
         create_reference_number = recipient_address.country in ( 'US', 'CA', 'PR' ) and shipper_address.country == recipient_address.country
         delivery_confirmation = create_reference_number
-        shipment = self._create_shipment(client, packages, shipper_address, recipient_address, box_shape, create_reference_number=create_reference_number, can_add_delivery_confirmation=delivery_confirmation)
+        shipment = self._create_shipment(client, packages, shipper_address, ship_from_address, recipient_address, box_shape, create_reference_number=create_reference_number, can_add_delivery_confirmation=delivery_confirmation,USPSEndorsement=USPSEndorsement, costCenter=costCenter, packageID=packageID)
         #apparently setting this to '' does not include it in SUDS output, so a space seems to do the trick
        	shipment.ShipmentRatingOptions.NegotiatedRatesIndicator = ' '
 
@@ -343,26 +361,26 @@ class UPS(object):
             shipment.ShipmentServiceOptions.DeliveryConfirmation.DCISType = unicode(package.require_signature)
 
         charge = client.factory.create('ns3:ShipmentChargeType')
-        charge2 = client.factory.create('ns3:ShipmentChargeType')
+        #charge2 = client.factory.create('ns3:ShipmentChargeType')
         charge.Type = '01'
-        charge2.Type = '02'
+        #charge2.Type = '02'
         charge.BillShipper.AccountNumber = self.credentials['shipper_number']
-        charge2.BillShipper.AccountNumber = self.credentials['shipper_number']
-        
-        #Bill duties to shipper if this is an international shipment
-        if shipment.Shipper.Address.CountryCode != shipment.ShipTo.Address.CountryCode:
-        	shipment.PaymentInformation.ShipmentCharge = [charge,charge2]
-        else:
-        	shipment.PaymentInformation.ShipmentCharge = charge
+        # charge2.BillShipper.AccountNumber = self.credentials['shipper_number']
 
-        shipment.Description = 'Shipment from %s to %s' % (shipper_address.name, recipient_address.name)
-        shipment.Description = shipment.Description[:50]
+        #Bill duties to shipper if this is an international shipment
+        # if shipment.Shipper.Address.CountryCode != shipment.ShipTo.Address.CountryCode:
+        	# shipment.PaymentInformation.ShipmentCharge = [charge,charge2]
+        # else:
+        shipment.PaymentInformation.ShipmentCharge = charge
+
+        shipment.Description = 'Ship webservice' #'Shipment from %s to %s' % (shipper_address.name, recipient_address.name)
+        #shipment.Description = shipment.Description[:50]
         shipment.Service.Code = service
 
-        shipment.Shipper.AttentionName = shipper_address.name[:35] or shipper_address.company_name[:35]
+        shipment.Shipper.AttentionName = '' #shipper_address.name[:35] or shipper_address.company_name[:35]
         shipment.Shipper.Phone.Number = shipper_address.phone
         shipment.Shipper.EMailAddress = shipper_address.email
-        shipment.ShipTo.AttentionName = recipient_address.name[:35] or recipient_address.company_name[:35] or ''
+        shipment.ShipTo.AttentionName = ''#recipient_address.name[:35] or recipient_address.company_name[:35] or ''
         shipment.ShipTo.Phone.Number = recipient_address.phone
         shipment.ShipTo.EMailAddress = recipient_address.email
 
@@ -420,7 +438,7 @@ class UPS(object):
 
         label = client.factory.create('ns3:LabelSpecificationType')
         label.LabelImageFormat.Code = label_type
-        if label_type == LABEL_TYPE[1][0]:
+        if label_type == LABEL_TYPE[0][0]:
         	label.LabelStockSize.Height = '6'
        		label.LabelStockSize.Width = '4'
         label.HTTPUserAgent = 'Mozilla/4.5'
@@ -428,6 +446,9 @@ class UPS(object):
             self.reply = client.service.ProcessShipment(request, shipment, label)
             results = self.reply.ShipmentResults
             logger.debug(results)
+
+            if self.debug:
+                print results
 
             response = {
                 'status': self.reply.Response.ResponseStatus.Description,
@@ -438,18 +459,12 @@ class UPS(object):
                 }
             }
 
-            try:
-                cost = results.NegotiatedRateCharges.TotalCharge.MonetaryValue
-            except AttributeError:
-                cost = results.ShipmentCharges.TotalCharges.MonetaryValue
-
             for p in results.PackageResults:
                 response['shipments'].append({
-                    'tracking_number': p.TrackingNumber,
-                    'cost': cost,
+                    'tracking_number': p.USPSPICNumber,
                     'label': base64.b64decode(p.ShippingLabel.GraphicImage),
                 })
-            
+
             try:
                 response['international_document']['description'] = results.Form.Description
                 response['international_document']['pdf'] = base64.b64decode(results.Form.Image.GraphicImage)

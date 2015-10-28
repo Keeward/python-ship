@@ -250,7 +250,7 @@ class DeliveryConfirmationRequest(USPSRequest):
         etree.SubElement(root, u'ToZip4')
         
         etree.SubElement(root, u'WeightInOunces').text = self.weight_in_ounces
-        etree.SubElement(root, u'ServiceType').text = 'Priority'
+        etree.SubElement(root, u'ServiceType').text = 'M4'#'Priority'
         etree.SubElement(root, u'POZipCode')
         
         etree.SubElement(root, u'ImageType').text = 'TIF'
@@ -316,7 +316,7 @@ class ExpressMailRequest(USPSRequest):
         etree.SubElement(root, u'ToZip4')
 
         etree.SubElement(root, u'WeightInOunces').text = self.weight_in_ounces
-        etree.SubElement(root, u'ServiceType').text = 'Priority'
+        etree.SubElement(root, u'ServiceType').text = 'M4'#'Priority'
         etree.SubElement(root, u'POZipCode')
 
         etree.SubElement(root, u'ImageType').text = 'TIF'
