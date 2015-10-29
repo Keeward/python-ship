@@ -6,9 +6,12 @@
 		<xsd:sequence>
 			<xsd:element name="FormType" type="xsd:string" maxOccurs="6"/>
 			<xsd:element name="UserCreatedForm" type="IF:UserCreatedFormType" minOccurs="0"/>
+			<xsd:element name="CN22Form" type="IF:CN22FormType" minOccurs="0"/>
+			<xsd:element name="UPSPremiumCareForm" type="IF:UPSPremiumCareFormType" minOccurs="0"/>
 			<xsd:element name="AdditionalDocumentIndicator" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="FormGroupIdName" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="SEDFilingOption" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="EEIFilingOption" type="IF:EEIFilingOptionType" minOccurs="0"/>
 			<xsd:element name="Contacts" type="IF:ContactType" minOccurs="0"/>
 			<xsd:element name="Product" type="IF:ProductType" maxOccurs="50"/>
 			<xsd:element name="InvoiceNumber" type="xsd:string" minOccurs="0"/>
@@ -30,6 +33,7 @@
 			<xsd:element name="InBondCode" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="EntryNumber" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="PointOfOrigin" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="PointOfOriginType" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="ModeOfTransport" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="PortOfExport" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="PortOfUnloading" type="xsd:string" minOccurs="0"/>
@@ -44,9 +48,45 @@
 			<xsd:element name="MultiCurrencyInvoiceLineTotal" type="xsd:string" minOccurs="0"/>
 		</xsd:sequence>
 	</xsd:complexType>
+	<xsd:complexType name="UPSPremiumCareFormType">
+		<xsd:sequence>
+			<xsd:element name="ShipmentDate" type="xsd:string"/>
+			<xsd:element name="PageSize" type="xsd:string"/>
+			<xsd:element name="PrintType" type="xsd:string"/>
+			<xsd:element name="NumOfCopies" type="xsd:string"/>
+			<xsd:element name="LanguageForUPSPremiumCare" type="IF:LanguageForUPSPremiumCareType"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="LanguageForUPSPremiumCareType">
+		<xsd:sequence>
+			<xsd:element name="Language" type="xsd:string" maxOccurs="2"/>
+		</xsd:sequence>
+	</xsd:complexType>
 	<xsd:complexType name="UserCreatedFormType">
 		<xsd:sequence>
 			<xsd:element name="DocumentID" type="xsd:string" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="CN22FormType">
+		<xsd:sequence>
+			<xsd:element name="LabelSize" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="PrintsPerPage" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="LabelPrintType" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="CN22Type" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="CN22OtherDescription" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="FoldHereText" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="CN22Content" type="IF:CN22ContentType" minOccurs="0" maxOccurs="3"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="CN22ContentType">
+		<xsd:sequence>
+			<xsd:element name="CN22ContentQuantity" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="CN22ContentDescription" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="CN22ContentWeight" type="IF:ProductWeightType" minOccurs="0"/>
+			<xsd:element name="CN22ContentTotalValue" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="CN22ContentCurrencyCode" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="CN22ContentCountryOfOrigin" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="CN22ContentTariffNumber" type="xsd:string" minOccurs="0"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:complexType name="ContactType">
@@ -79,6 +119,7 @@
 		<xsd:sequence>
 			<xsd:element name="CompanyName" type="xsd:string"/>
 			<xsd:element name="Address" type="IF:AddressType"/>
+			<xsd:element name="UltimateConsigneeType" type="IF:UltimateConsigneeTypeType" minOccurs="0"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:complexType name="IntermediateConsigneeType">
@@ -120,6 +161,7 @@
 			<xsd:element name="ExcludeFromForm" type="IF:ExcludeFromFormType" minOccurs="0"/>
 			<xsd:element name="ProductCurrencyCode" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="PackingListInfo" type="IF:PackingListInfoType" minOccurs="0"/>
+			<xsd:element name="EEIInformation" type="IF:EEIInformationType" minOccurs="0"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:complexType name="ExcludeFromFormType">
@@ -166,8 +208,8 @@
 	<xsd:complexType name="ScheduleBType">
 		<xsd:sequence>
 			<xsd:element name="Number" type="xsd:string"/>
-			<xsd:element name="Quantity" type="xsd:string" minOccurs="0"/>
-			<xsd:element name="UnitOfMeasurement" type="IF:UnitOfMeasurementType"/>
+			<xsd:element name="Quantity" type="xsd:string" minOccurs="0" maxOccurs="2"/>
+			<xsd:element name="UnitOfMeasurement" type="IF:UnitOfMeasurementType" maxOccurs="2"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:complexType name="IFChargesType">
@@ -219,6 +261,67 @@
 		<xsd:sequence>
 			<xsd:element name="Number" type="xsd:string"/>
 			<xsd:element name="Extension" type="xsd:string" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="DDTCInformationType">
+		<xsd:sequence>
+			<xsd:element name="ITARExemptionNumber" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="USMLCategoryCode" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="EligiblePartyIndicator" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="RegistrationNumber" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="Quantity" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="UnitOfMeasurement" type="IF:UnitOfMeasurementType"/>
+			<xsd:element name="SignificantMilitaryEquipmentIndicator" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="ACMNumber" type="xsd:string" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="EEILicenseType">
+		<xsd:sequence>
+			<xsd:element name="Number" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="Code" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="LicenseLineValue" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="ECCNNumber" type="xsd:string" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="EEIFilingOptionType">
+		<xsd:sequence>
+			<xsd:element name="Code" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="EMailAddress" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="Description" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="UPSFiled" type="IF:UPSFiledType" minOccurs="0"/>
+			<xsd:element name="ShipperFiled" type="IF:ShipperFiledType" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="UPSFiledType">
+		<xsd:sequence>
+			<xsd:element name="POA" type="IF:POAType"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="ShipperFiledType">
+		<xsd:sequence>
+			<xsd:element name="Code" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="Description" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="PreDepartureITNNumber" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="ExemptionLegend" type="xsd:string" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="EEIInformationType">
+		<xsd:sequence>
+			<xsd:element name="ExportInformation" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="License" type="IF:EEILicenseType" minOccurs="0"/>
+			<xsd:element name="DDTCInformation" type="IF:DDTCInformationType" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="POAType">
+		<xsd:sequence>
+			<xsd:element name="Code" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="Description" type="xsd:string" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="UltimateConsigneeTypeType">
+		<xsd:sequence>
+			<xsd:element name="Code" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="Description" type="xsd:string" minOccurs="0"/>
 		</xsd:sequence>
 	</xsd:complexType>
 </xsd:schema>
