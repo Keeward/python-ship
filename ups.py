@@ -64,14 +64,14 @@ class UPSError(Exception):
         error_text = 'UPS Error %s: %s' % (code, text)
 
         super(UPSError, self).__init__(error_text)
-        
+
 def recurseElement(element, search, replace):
 	if search == element.qname():
 		element.rename(replace)
 	if element.isempty != True:
 		for x in element.getChildren():
 			recurseElement(x,search,replace)
-	return 
+	return
 
 from suds.plugin import MessagePlugin
 class FixRequestNamespacePlug(MessagePlugin):
@@ -89,7 +89,7 @@ class UPS(object):
         self.wsdl_dir = os.path.join(this_dir, 'wsdl', 'ups')
         self.credentials = credentials
         self.debug = debug
-    
+
     def _add_security_header(self, client):
         security_ns = ('security', 'http://www.ups.com/XMLSchema/XOLTWS/UPSS/v1.0')
         security = Element('UPSSecurity', ns=security_ns)
@@ -108,7 +108,7 @@ class UPS(object):
         security.append(service_token)
 
         client.set_options(soapheaders=security)
-    
+
     def _normalized_country_code(self, country):
         country_lookup = {
             'usa': 'US',
@@ -116,14 +116,14 @@ class UPS(object):
             'canada': 'CA',
         }
         return country_lookup.get(country.lower(), country)
-        
+
     def wsdlURL(self, wsdl_name):
         wsdl_file_path = os.path.join(self.wsdl_dir, wsdl_name)
         # Get the os specific url to deal with windows drive letter
         wsdl_file_url = urllib.pathname2url(wsdl_file_path)
         wsdl_url = urlparse.urljoin('file://', wsdl_file_url)
         return wsdl_url
-    
+
     def _get_client(self, wsdl):
         wsdl_url = self.wsdlURL(wsdl)
         # Setting prefixes=False does not help
@@ -133,7 +133,7 @@ class UPS(object):
       	#ns1 = "http://www.ups.com/XMLSchema/XOLTWS/Error/v1.1"
      	#ns2 = "http://www.ups.com/XMLSchema/XOLTWS/IF/v1.0"
       	#ns3 = "http://www.ups.com/XMLSchema/XOLTWS/Ship/v1.0"
-        
+
     def soapClient(self, wsdl):
         wsdl_url = self.wsdlURL(wsdl)
         return SoapClient(wsdl=wsdl_url, trace=True)
@@ -153,7 +153,7 @@ class UPS(object):
                 package.Packaging.Code = box_shape
             elif hasattr(package, 'PackagingType'):
                 package.PackagingType.Code = box_shape
-            
+
             if box_shape == PACKAGES[0][0]:
             	package.Dimensions.UnitOfMeasurement.Code = 'IN'
             	if (p.length == 0) or (p.width == 0) or (p.height == 0):
@@ -161,18 +161,18 @@ class UPS(object):
             	package.Dimensions.Length = p.length
             	package.Dimensions.Width = p.width
             	package.Dimensions.Height = p.height
-            
+
             package.PackageWeight.UnitOfMeasurement.Code = 'LBS'
             package.PackageWeight.Weight = p.weight
 
             if can_add_delivery_confirmation and p.require_signature:
                 package.PackageServiceOptions.DeliveryConfirmation.DCISType = str(p.require_signature)
-             
-            
+
+
             if p.value:
                 package.PackageServiceOptions.DeclaredValue.CurrencyCode = 'CAD' if (shipper_country=='CA') else 'USD'
                 package.PackageServiceOptions.DeclaredValue.MonetaryValue = p.value
-            
+
             if create_reference_number and p.reference:
                 try:
                     reference_number = client.factory.create('{0}:ReferenceNumberType'.format(namespace))
@@ -248,7 +248,7 @@ class UPS(object):
             logger.debug(shipment)
             self.reply = client.service.ProcessRate(request, CustomerClassification=classification, Shipment=shipment)
             logger.debug(self.reply)
-            
+
             service_lookup = dict(SERVICES)
 
             info = list()
@@ -269,21 +269,21 @@ class UPS(object):
             return response
         except suds.WebFault as e:
             raise UPSError(e.fault, e.document)
-    
+
     def validate(self, recipient):
         client = self._get_client('XAV.wsdl')
         #client = self.soapClient('XAV.wsdl')
         #wsdl_url = self.wsdlURL('XAV.wsdl')
         #clifent = SoapClient(wsdl = wsdl_url, trace=True)
         #return client
-        
+
         self._add_security_header(client)
         if not self.debug:
             client.set_options(location='https://onlinetools.ups.com/webservices/XAV')
-        
+
         request = client.factory.create('ns0:RequestType')
         request.RequestOption = 3 # Address Validation w/ Classification
-        
+
         address = client.factory.create('ns2:AddressKeyFormatType')
         address.ConsigneeName = recipient.name
         address.AddressLine = [ recipient.address1, recipient.address2 ]
@@ -291,12 +291,12 @@ class UPS(object):
         address.PoliticalDivision1 = recipient.state
         address.PostcodePrimaryLow = recipient.zip
         address.CountryCode = self._normalized_country_code(recipient.country)
-        
+
         try:
             reply = client.service.ProcessXAV(request, AddressKeyFormat=address)
-            
+
             result = {}
-            
+
             result['candidates'] = list()
             if hasattr(reply, 'Candidate'):
                 for c in reply.Candidate:
@@ -313,12 +313,12 @@ class UPS(object):
 
                     if a not in result['candidates']:
                         result['candidates'].append(a)
-                        
+
             if hasattr(reply, 'AddressClassification'):
                # Need some better names maybe
                result['class_code'] = reply.AddressClassification.Code
                result['class_description'] = reply.AddressClassification.Description
-            
+
             result['valid'] = hasattr(reply, 'ValidAddressIndicator')
             result['ambiguous'] =  hasattr(reply, 'AmbiguousAddressIndicator')
             return result
@@ -340,8 +340,11 @@ class UPS(object):
 
         request = client.factory.create('ns0:RequestType')
         request.RequestOption = 'validate' if validate_address else 'nonvalidate'
-        
-        create_reference_number = recipient_address.country in ( 'US', 'CA', 'PR' ) and shipper_address.country == recipient_address.country
+
+        shipper_country = self._normalized_country_code(shipper_address.country)
+        recipient_country = self._normalized_country_code(recipient_address.country)
+
+        create_reference_number = recipient_country in ( 'US', 'CA', 'PR' ) and shipper_country == recipient_country
         delivery_confirmation = create_reference_number
         shipment = self._create_shipment(client, packages, shipper_address, ship_from_address, recipient_address, box_shape, create_reference_number=create_reference_number, can_add_delivery_confirmation=delivery_confirmation,USPSEndorsement=USPSEndorsement, costCenter=costCenter, packageID=packageID)
         #apparently setting this to '' does not include it in SUDS output, so a space seems to do the trick

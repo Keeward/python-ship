@@ -54,11 +54,11 @@ class Package(object):
     LibraryService='LIBRARY'
     AllService='ALL'
     OnlineService='ONLINE'
-    
+
     LetterMailType = 'LETTER'
     FlatMailType = 'FLAT'
     ParcelMailType = 'PARCEL'
-    
+
     RegularSize = 'REGULAR'
     LargeSize = 'LARGE'
     OversizeSize = 'OVERSIZE'
@@ -71,30 +71,30 @@ class Package(object):
         self.dimensions = (length, width, height)
         self.size = self.RegularSize
         self.postages = dict()
-        
+
     def __repr__(self):
         text = self.ID()
         for (mail_type, rate) in self.postages.items():
             text += '\n\t%s: %s' % (mail_type, rate)
         return text
-        
+
     def ID(self):
         id = '%s To %s Package' % (self.shipper.name, self.recipient.name)
         return id.replace(' ', '')
-        
+
     def SetFirstClass(self, mail_type):
         self.service_type = self.FirstClassService
         self.first_class_mail_type = mail_type
-    
+
     def AddPostage(self, mail_type, rate):
         self.postages[mail_type] = rate
-        
+
 class Error(object):
     def __init__(self, number, description, source):
         self.number = number
         self.description = description
         self.source = source
-        
+
     def __repr__(self):
         return "Error in '%s': %s" % (self.source, self.description)
 
@@ -102,7 +102,7 @@ class USPSRequest(object):
     def __init__(self, credentials, url):
         self.credentials = credentials
         self.url = url
-        
+
     def Send(self):
         root = self._get_xml()
         request_text = etree.tostring(root)
@@ -120,10 +120,10 @@ class USPSRequest(object):
             raise
 
         return response
-        
+
     def _get_xml(self):
         return self._GetBody()
-        
+
     def _ParseResponse(self, response_text):
         """Parses the text from a USPS web service call"""
         root = etree.fromstring(response_text)
@@ -133,7 +133,7 @@ class USPSRequest(object):
         else:
             response = self._parse_response_body(root)
         return response
-        
+
     def _ParseError(self, error_root):
         number = error_root.findtext('Number')
         description = error_root.findtext('Description')
@@ -144,7 +144,7 @@ class RateRequest(USPSRequest):
     def __init__(self, username, packages):
         self.debug = True
         url = 'http://testing.shippingapis.com/ShippingAPITest.dll?API=RateV2&XML=' if self.debug else 'http://production.shippingapis.com/ShippingAPI.dll?API=RateV3&XML='
-        
+
         credentials = Credentials(username, '')
         super(RateRequest, self).__init__(credentials, url)
         self.packages = packages
@@ -153,12 +153,12 @@ class RateRequest(USPSRequest):
         body = self._GetBody()
         indent(body)
         return etree.tostring(body)
-        
+
     def _GetBody(self):
         root_id = u'RateV2Request' if self.debug else u'RateV3Request'
         root = etree.Element(root_id)
         root.set('USERID', self.credentials.username)
-        
+
         for i, package in enumerate(self.packages):
             package_token = etree.SubElement(root, u'Package')
             package_id = '%s%d' % (package.ID(), i)
@@ -177,7 +177,7 @@ class RateRequest(USPSRequest):
             etree.SubElement(package_token, u'Container')
 
             """
-            May be left blank in situations that do not require a Size. Defined as follows: REGULAR: package length plus girth is 84 inches or less; LARGE: package length plus girth measure more than 84 inches but not more than 108 inches; OVERSIZE: package length plus girth is more than 108 but not more than 130 inches. 
+            May be left blank in situations that do not require a Size. Defined as follows: REGULAR: package length plus girth is 84 inches or less; LARGE: package length plus girth measure more than 84 inches but not more than 108 inches; OVERSIZE: package length plus girth is more than 108 but not more than 130 inches.
             """
             length = max(package.dimensions)
             etree.SubElement(package_token, u'Size').text = Package.LargeSize
@@ -185,14 +185,14 @@ class RateRequest(USPSRequest):
             etree.SubElement(package_token, u'Machinable').text = 'true'
 
         return root
-        
+
     def _parse_response_body(self, root):
         return RateResponse(root, self.packages)
 
 class RateResponse(object):
     def __init__(self, root, packages):
         self.packages = packages
-        
+
         package_roots = root.findall('Package')
         assert len(package_roots) == len(self.packages)
         for i, package in enumerate(self.packages):
@@ -201,36 +201,36 @@ class RateResponse(object):
                 mail_service = postage_root.findtext('MailService')
                 rate = postage_root.findtext('Rate')
                 package.AddPostage(mail_service, rate)
-        
+
     def __repr__(self):
         import pprint
         return pprint.pformat(self.packages)
-        
+
 class DeliveryConfirmationRequest(USPSRequest):
     def __init__(self, username, sender, recipient, weight_in_ounces):
         self.debug = True
         url = 'https://secure.shippingapis.com/ShippingAPITest.dll?API=DelivConfirmCertifyV3&XML=' if self.debug else 'https://production.shippingapis.com/ShippingAPI.dll?API=DeliveryConfirmationV3&XML='
-        
+
         credentials = Credentials(username, '')
         super(DeliveryConfirmationRequest, self).__init__(credentials, url)
-        
+
         self.sender = sender
         self.recipient = recipient
         self.weight_in_ounces = str(weight_in_ounces)
-        
+
     def __repr__(self):
         body = self._GetBody()
         indent(body)
         return etree.tostring(body)
-        
+
     def _GetBody(self):
         root_id = u'DelivConfirmCertifyV3.0Request' if self.debug else u'DeliveryConfirmationV3.0Request'
         root = etree.Element(root_id)
         root.set('USERID', self.credentials.username)
-        
+
         etree.SubElement(root, u'Option').text = '1'
         etree.SubElement(root, u'ImageParameters')
-        
+
         etree.SubElement(root, u'FromName').text = self.sender.name[0:31]
         etree.SubElement(root, u'FromFirm')
         etree.SubElement(root, u'FromAddress1').text = self.sender.address2[0:31]
@@ -239,7 +239,7 @@ class DeliveryConfirmationRequest(USPSRequest):
         etree.SubElement(root, u'FromState').text = self.sender.state
         etree.SubElement(root, u'FromZip5').text = self.sender.zip
         etree.SubElement(root, u'FromZip4')
-        
+
         etree.SubElement(root, u'ToName').text = self.recipient.name[0:31]
         etree.SubElement(root, u'ToFirm')
         etree.SubElement(root, u'ToAddress1').text = self.recipient.address2[0:31]
@@ -248,30 +248,30 @@ class DeliveryConfirmationRequest(USPSRequest):
         etree.SubElement(root, u'ToState').text = self.recipient.state
         etree.SubElement(root, u'ToZip5').text = self.recipient.zip
         etree.SubElement(root, u'ToZip4')
-        
+
         etree.SubElement(root, u'WeightInOunces').text = self.weight_in_ounces
         etree.SubElement(root, u'ServiceType').text = 'M4'#'Priority'
         etree.SubElement(root, u'POZipCode')
-        
+
         etree.SubElement(root, u'ImageType').text = 'TIF'
         etree.SubElement(root, u'AddressServiceRequest').text = 'TRUE'
         etree.SubElement(root, u'LabelDate')
 
         return root
-    
+
     def _parse_response_body(self, root):
         return DeliveryConfirmationResponse(root)
-        
+
 class DeliveryConfirmationResponse(object):
     def __init__(self, root):
         self.tracking = root.findtext('DeliveryConfirmationNumber')
         label = root.findtext('DeliveryConfirmationLabel')
         self.label = base64.b64decode(label)
-    
+
     def __repr__(self):
         indent(self.root)
         return etree.tostring(self.root)
-        
+
 class ExpressMailRequest(USPSRequest):
     def __init__(self, username, sender, recipient, weight_in_ounces):
         self.debug = True

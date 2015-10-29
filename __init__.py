@@ -3,7 +3,6 @@
 
 try:
     from config import UPSConfig
-    from ..configuration import app
 except:
     print 'HELLO THERE! test_config not found. If you want to run this test, you need to setup test_config.py with your account information.'
     raise
@@ -57,7 +56,7 @@ class ReportGenerator():
         package = Package(shipmentweight, 12, 12, 12, require_signature=4)
         packages = [ package ]
 
-        debug = app.config['DEBUG']
+        debug = TRUE #app.config['DEBUG']
         print 'debug is '
         print debug
         u = ups.UPS(UPSConfig, debug=debug)
