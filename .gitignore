@@ -68,5 +68,8 @@ target/
 config.py
 tests/config.py
 
+
 #Ignore Apple cach files
 *.DS_Store
+
+documents/*
