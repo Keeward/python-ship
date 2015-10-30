@@ -18,7 +18,7 @@ def _normalize_country(country):
         'us': 'United States',
         'usa': 'United States',
     }
-    
+
     return country_lookup.get(country.lower(), country)
 
 class EndiciaError(Exception):
@@ -28,7 +28,7 @@ class EndiciaWebError(EndiciaError):
     def __init__(self, fault, document):
         self.fault = fault
         self.document = document
-        
+
         error_text = 'Endicia error {}: {}'.format(fault.faultcode, fault.faultstring)
         super(EndiciaWebError, self).__init__(error_text)
 
@@ -43,15 +43,15 @@ class Package(object):
         'ParcelSelect',
         'StandardMailClass',
     ]
-    
+
     international_shipment_types = [
         'ExpressMailInternational',
         'FirstClassMailInternational',
         'PriorityMailInternational',
     ]
-    
+
     shipment_types = domestic_shipment_types + international_shipment_types
-    
+
     shapes = [
         'SmallFlatRateBox',
         'MediumFlatRateBox',
@@ -125,7 +125,7 @@ class Endicia(object):
                 raise Exception("Can only take one Package at a time!")
 
             package = package[0]
-        
+
         to_country_code = get_country_code(recipient.country)
 
         request = self.client.factory.create('PostageRatesRequest')
@@ -207,13 +207,15 @@ class EndiciaRequest(object):
         self.debug = debug
         self.url = url
         self.api = api
-        
+
     def send(self):
         root = self._get_xml()
-        request_text = etree.tostring(root)
+        #request_text = etree.tostring(root)
+        request_text = etree.tostring(root, encoding='utf8', method='xml')
 
         try:
-            url_base = u'https://www.envmgr.com/LabelService/EwsLabelService.asmx' if self.debug else u'https://LabelServer.Endicia.com/LabelService/EwsLabelService.asmx'
+            #url_base = u'https://www.envmgr.com/LabelService/EwsLabelService.asmx' if self.debug else u'https://LabelServer.Endicia.com/LabelService/EwsLabelService.asmx'
+            url_base = 'https://elstestserver.endicia.com/LabelService/EwsLabelService.asmx'
             full_url = u'%s/%s' % (url_base, self.url)
             data = '%s=%s' % (self.api, quote(request_text))
             request = Request(full_url, data)
@@ -227,7 +229,7 @@ class EndiciaRequest(object):
             raise
 
         return response
-        
+
     def __parse_response(self, response_text):
         """Parses the text from an Endicia web service call"""
         root = etree.fromstring(response_text)
@@ -246,10 +248,10 @@ class Error(object):
         self.status = status
         error_path = '{%s}ErrorMessage' % namespace
         self.message = root.findtext(error_path).encode('UTF-8')
-        
+
     def __repr__(self):
         return 'Endicia error %d: %s' % (self.status, self.message)
-        
+
 class LabelRequest(EndiciaRequest):
     def __init__(self, partner_id, account_id, passphrase, package, shipper, recipient,
                        stealth=True, value=0, insurance='OFF', insurance_amount=0,
@@ -259,16 +261,16 @@ class LabelRequest(EndiciaRequest):
                        return_services=False,
                        label_type=None,
                        label_size="4X6",
-                       image_format="PNG",
+                       image_format="GIF",
                        debug=False):
         url = u'GetPostageLabelXML'
         api = u'labelRequestXML'
         super(LabelRequest, self).__init__(url, api, debug)
-        
+
         self.partner_id = partner_id
         self.account_id = account_id
         self.passphrase = passphrase
-        
+
         self.package = package
         self.shipper = shipper
         self.recipient = recipient
@@ -288,11 +290,11 @@ class LabelRequest(EndiciaRequest):
             self.label_type = 'International' if package.mail_class in Package.international_shipment_types else 'Default'
         else:
             self.label_type = label_type
-            
-        
+
+
     def _parse_response_body(self, root, namespace):
         return LabelResponse(root, namespace, format=self.image_format)
-        
+
     def _get_xml(self):
         root = etree.Element('LabelRequest')
         root.set('LabelType', self.label_type)
@@ -300,32 +302,32 @@ class LabelRequest(EndiciaRequest):
         root.set('ImageFormat', self.image_format)
         if self.debug:
             root.set('Test', 'YES')
-        
+
         etree.SubElement(root, u'RequesterID').text = self.partner_id
         etree.SubElement(root, u'AccountID').text = self.account_id
         etree.SubElement(root, u'PassPhrase').text = self.passphrase
-        
+
         etree.SubElement(root, u'MailClass').text = self.package.mail_class
         etree.SubElement(root, u'WeightOz').text = self.package.weight_oz
         etree.SubElement(root, u'MailpieceShape').text = self.package.shape
         etree.SubElement(root, u'Stealth').text = self.stealth
         etree.SubElement(root, u'Value').text = self.package.value
         etree.SubElement(root, u'Description').text = self.package.description
-        
+
         etree.SubElement(root, u'PartnerCustomerID').text = 'SomeCustomerID'
         etree.SubElement(root, u'PartnerTransactionID').text = 'SomeTransactionID'
-        
+
         etree.SubElement(root, u'ResponseOptions').set('PostagePrice', 'TRUE')
-        
+
         self._add_address(self.shipper, 'From', root)
         self._add_address(self.recipient, 'To', root)
-        
+
         etree.SubElement(root, u'Stealth').text = self.stealth
         etree.SubElement(root, u'Value').text = str(self.value)
         etree.SubElement(root, u'InsuredValue').text = str(self.insurance_amount)
 
         etree.SubElement(root, u'DateAdvance').text = str(self.date_advance)
-        
+
         services = etree.SubElement(root, u'Services')
         services.set(u'DeliveryConfirmation', self.delivery_confirmation)
         services.set(u'SignatureConfirmation', self.signature_confirmation)
@@ -333,7 +335,7 @@ class LabelRequest(EndiciaRequest):
 
         if self.return_services:
             services.set(u'ReturnReceipt', "YES")
-       
+
         dimensions = etree.SubElement(root, u'MailpieceDimensions')
         etree.SubElement(dimensions, u'Length').text = str(self.package.length)
         etree.SubElement(dimensions, u'Width').text = str(self.package.width)
@@ -376,12 +378,12 @@ class LabelRequest(EndiciaRequest):
         if self.customs and self.customs.signature:
             etree.SubElement(root, u'CustomsCertify').text = 'TRUE'
             etree.SubElement(root, u'CustomsSigner').text = self.customs.signature
-        
+
         #from shipping import debug_print_tree
         #debug_print_tree(root)
-        
+
         return root
-        
+
     def _add_address(self, address, type, root):
         info = dict()
         info['Company'] = address.company_name
@@ -397,7 +399,7 @@ class LabelRequest(EndiciaRequest):
 
         if address.address2:
             info['Address2'] = address.address2
-        
+
         for key, value in info.items():
             # Endicia expects ReturnAddressX instead of FromAddressX
             if type == 'From' and 'Address' in key:
@@ -405,7 +407,7 @@ class LabelRequest(EndiciaRequest):
             else:
                 element_key = '%s%s' % (type, key)
             etree.SubElement(root, element_key).text = value
-            
+
 class LabelResponse(object):
     def __init__(self, root, namespace, format=None):
         self.root = root
@@ -416,18 +418,17 @@ class LabelResponse(object):
         self.postage_balance = root.findtext('{%s}PostageBalance' % namespace)
         encoded_image = root.findtext('{%s}Base64LabelImage' % namespace)
 
-        if encoded_image:
-            self.label = [base64.b64decode(encoded_image)]
-        else:
-            self.label = [
-                base64.b64decode(img.text) for img in root.find('{%s}Label' % namespace).findall('{%s}Image' % namespace)
-            ]
+        # if encoded_image:
+        self.label = base64.b64decode(encoded_image)
+        # else:
+        #     self.label = base64.b64decode(img.text) for img in root.find('{%s}Label' % namespace).findall('{%s}Image' % namespace)
+
 
         self.format = format
-        
+
     def __repr__(self):
         return 'Tracking: %s, cost: $%s' % (self.tracking, self.postage)
-        
+
 class RecreditRequest(EndiciaRequest):
     def __init__(self, partner_id, account_id, passphrase, amount, debug=False):
         url = u'BuyPostageXML'
@@ -437,7 +438,7 @@ class RecreditRequest(EndiciaRequest):
         self.partner_id = partner_id
         self.account_id = account_id
         self.passphrase = passphrase
-        
+
         self.amount = str(amount)
 
     def _parse_response_body(self, root, namespace):
@@ -451,7 +452,7 @@ class RecreditRequest(EndiciaRequest):
         ci = etree.SubElement(root, u'CertifiedIntermediary')
         etree.SubElement(ci, u'AccountID').text = self.account_id
         etree.SubElement(ci, u'PassPhrase').text = self.passphrase
-        
+
         etree.SubElement(root, u'RecreditAmount').text = self.amount
 
         return root
@@ -465,7 +466,7 @@ class RecreditResponse(object):
 
     def __repr__(self):
         return 'Status: %s, Balance: $%s, Total Printed: $%s' % (self.account_status, self.postage_balance, self.postage_printed)
-        
+
 class ChangePasswordRequest(EndiciaRequest):
     def __init__(self, partner_id, account_id, passphrase, new_passphrase, debug=False):
         url = u'ChangePassPhraseXML'
@@ -501,7 +502,7 @@ class ChangePasswordResponse(object):
 
     def __repr__(self):
         return 'Password Change: %s' % ('OK' if int(self.status) == 0 else 'Error')
-        
+
 class RateRequest(EndiciaRequest):
     def __init__(self, partner_id, account_id, passphrase, package, shipper, recipient, debug=False):
         url = u'CalculatePostageRateXML'
@@ -526,16 +527,16 @@ class RateRequest(EndiciaRequest):
         ci = etree.SubElement(root, u'CertifiedIntermediary')
         etree.SubElement(ci, u'AccountID').text = self.account_id
         etree.SubElement(ci, u'PassPhrase').text = self.passphrase
-        
+
         etree.SubElement(root, u'MailClass').text = self.package.mail_class
-        #etree.SubElement(root, u'DateAdvance').text = 
+        #etree.SubElement(root, u'DateAdvance').text =
         etree.SubElement(root, u'WeightOz').text = self.package.weight_oz
         etree.SubElement(root, u'MailpieceShape').text = self.package.shape
         etree.SubElement(root, u'Value').text = self.package.value
-        
+
         etree.SubElement(root, u'FromPostalCode').text = self.shipper.zip
         etree.SubElement(root, u'ToPostalCode').text = self.recipient.zip
-        
+
         etree.SubElement(root, u'ResponseOptions').set('PostagePrice', 'TRUE')
 
         return root
@@ -547,7 +548,7 @@ class RateResponse(object):
 
     def __repr__(self):
         return 'Estimated Cost: $%s' % self.postage_price
-        
+
 class AccountStatusRequest(EndiciaRequest):
     def __init__(self, partner_id, account_id, passphrase, debug=False):
         url = u'GetAccountStatusXML'
@@ -587,11 +588,11 @@ class RefundRequest(EndiciaRequest):
         url = u'RefundRequestXML'
         api = u'refundRequestXML'
         super(RefundRequest, self).__init__(url, api, debug)
-        
+
         self.account_id = account_id
         self.passphrase = passphrase
         self.tracking_number = tracking_number
-    
+
     def send(self):
         root = self._get_xml()
         request_text = etree.tostring(root)
@@ -611,10 +612,10 @@ class RefundRequest(EndiciaRequest):
             raise
 
         return response
-    
+
     def _parse_response_body(self, root, namespace):
         return RefundResponse(root, namespace)
-    
+
     def _get_xml(self):
         root = etree.Element('RefundRequest')
 
@@ -628,7 +629,7 @@ class RefundRequest(EndiciaRequest):
 class RefundResponse(object):
     def __init__(self, root, namespace):
         self.root = root
-    
+
     def __repr__(self):
         from shipping import debug_print_tree
         debug_print_tree(self.root)

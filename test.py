@@ -16,7 +16,7 @@ import sys
 sys.path.append('../')
 
 import ups
-# import endicia
+import endicia
 import fedex
 
 USPSEndorsement= '2'
@@ -39,22 +39,23 @@ ship_from_zipcode='11581'
 ship_from_countrycode='US'
 ship_from_phone=''
 
-shipper = Address(shipper_from_name, shipper_from_address, shipper_from_city, shipper_from_state, shipper_from_zipcode, shipper_from_countrycode, phone=shipper_from_phone, email='')
-ship_from = Address(ship_from_name, ship_from_address, ship_from_city, ship_from_state, ship_from_zipcode, ship_from_countrycode, phone=ship_from_phone, email='')
-#recipient = Address(ship_to_name, ship_to_address, ship_to_city, ship_to_state, ship_to_zipcode, ship_to_countrycode, address2=ship_to_address2, phone=ship_to_phone, email='')
-recipient = Address('PAUL LIM', "1301 BURTON VALLEY RD", 'NASHVILLE', 'TN', '37215-4305', 'US', address2='', phone='9785902243', email='')
+# shipper = Address(shipper_from_name, shipper_from_address, shipper_from_city, shipper_from_state, shipper_from_zipcode, shipper_from_countrycode, phone=shipper_from_phone, email='')
+# ship_from = Address(ship_from_name, ship_from_address, ship_from_city, ship_from_state, ship_from_zipcode, ship_from_countrycode, phone=ship_from_phone, email='')
+# #recipient = Address(ship_to_name, ship_to_address, ship_to_city, ship_to_state, ship_to_zipcode, ship_to_countrycode, address2=ship_to_address2, phone=ship_to_phone, email='')
+# recipient = Address('PAUL LIM', "1301 BURTON VALLEY RD", 'NASHVILLE', 'TN', '37215-4305', 'US', address2='', phone='9785902243', email='')
 
-#shipper = Address('Adobe', "345 Park Avenue", 'San Jose', country='CA', 95110, 'US', phone='5122901212', email='ben@ordoro.com')
-#ship_from = Address('Adobe', "345 Park Avenue", 'San Jose', 'CA', 95110, 'US', phone='5122901212', email='ben@ordoro.com')
+# shipper = Address('Adobe', "345 Park Avenue", 'San Jose', country='CA', 95110, 'US', phone='5122901212', email='ben@ordoro.com')
+# ship_from = Address('Adobe', "345 Park Avenue", 'San Jose', 'CA', 95110, 'US', phone='5122901212', email='ben@ordoro.com')
 
-#recipient = Address('Apple', "1 Infinite Loop", 'Cupertino', 'CA', 95014, 'US', phone='5122901212', email='ben@ordoro.com')
-# bad_recipient = Address('Apple', "1 Park Place.", 'San Diego', 'CA', 95014, 'US', phone='5122901212', email='ben@ordoro.com', address2='#502')
-# recipient_intl = Address('Apple', "1 Infinite Loop", 'Cupertino', 'CA', 95014, 'CA', phone='5122901212', email='ben@ordoro.com')
-# recipient_intl2 = Address('Bazaarvoice', 'One Lyric Square', 'London', '', 'W6 0NB', 'GB', phone='+44 (0)208 080', email='ben@ordoro.com')
-# recipient_intl3 = Address('Bazaarvoice', '111 Rue Francis de Pressensé', 'villeurbanne', '', '69100', 'FR', phone='+44 (0)208 080', email='ben@ordoro.com')
-# recipient_intl4 = Address('Some Recipient', '24 Tennant st', 'EDINBURGH', 'Midlothian', 'EH6 5ND', 'GB', phone='+44 (0)208 080', email='ben@ordoro.com')
-# recipient_intl5 = Address('Bazaarvoice', 'Flat 3 Gainsborough Court', 'London', '', 'W6 0NB', 'GB', phone='+44 (0)208 080', email='ben@ordoro.com')
-# recipient_intl6 = Address('Bazaarvoice', 'One Lyric Square', 'London', '', 'W6 0NB', 'GB', phone='+44 (0)208 080', email='ben@ordoro.com')
+shipper = Address('Apple', "1 Infinite Loop", 'Cupertino', 'CA', '95014', 'US', phone='5122901212', email='ben@ordoro.com')
+recipient = Address('Apple', "1 Infinite Loop", 'Cupertino', 'CA', '95014', 'US', phone='5122901212', email='ben@ordoro.com')
+bad_recipient = Address('Apple', "1 Park Place.", 'San Diego', 'CA', '95014', 'US', phone='5122901212', email='ben@ordoro.com', address2='#502')
+recipient_intl = Address('Apple', "1 Infinite Loop", 'Cupertino', 'CA', '95014', 'CA', phone='5122901212', email='ben@ordoro.com')
+recipient_intl2 = Address('Bazaarvoice', 'One Lyric Square', 'London', '', 'W6 0NB', 'GB', phone='+44 (0)208 080', email='ben@ordoro.com')
+recipient_intl3 = Address('Bazaarvoice', '111 Rue Francis de Pressensé', 'villeurbanne', '', '69100', 'FR', phone='+44 (0)208 080', email='ben@ordoro.com')
+recipient_intl4 = Address('Some Recipient', '24 Tennant st', 'EDINBURGH', 'Midlothian', 'EH6 5ND', 'GB', phone='+44 (0)208 080', email='ben@ordoro.com')
+recipient_intl5 = Address('Bazaarvoice', 'Flat 3 Gainsborough Court', 'London', '', 'W6 0NB', 'GB', phone='+44 (0)208 080', email='ben@ordoro.com')
+recipient_intl6 = Address('Bazaarvoice', 'One Lyric Square', 'London', '', 'W6 0NB', 'GB', phone='+44 (0)208 080', email='ben@ordoro.com')
 
 
 def get_document_image_path():
@@ -74,6 +75,13 @@ def show_file(extension, data):
     with tempfile.NamedTemporaryFile(suffix=extension, delete=False) as temp_file:
         temp_file.write(data)
         os.system('open %s' % temp_file.name)
+
+
+def _show_file(extension, data):
+    with tempfile.NamedTemporaryFile(suffix=extension, delete=False) as temp_file:
+        temp_file.write(data)
+        os.system('open %s' % temp_file.name)
+
 
 class P(object):
     def __init__(self, **kwargs):
@@ -156,39 +164,56 @@ def TestUPS():
 def TestEndiciaLabel():
     package = endicia.Package(endicia.Package.shipment_types[0], 20, endicia.Package.shapes[1], 10, 10, 10)
     package_intl = endicia.Package(endicia.Package.international_shipment_types[0], 20, endicia.Package.shapes[3], 10, 10, 10)
-    customs = [ endicia.Customs('hello', 1, 2, 100, 'Bermuda'), endicia.Customs('Thingy', 10, 16, 80, 'Bahamas') ]
+    #customs = [ endicia.customs('hello', 1, 2, 100, 'Bermuda'), endicia.Customs('Thingy', 10, 16, 80, 'Bahamas') ]
+
+    EndiciaPartnerID = "lxxx"
+    EndiciaAccountID = "2504866"
+    EndiciaPassphrase = "wewillrockyou"
 
     debug = True
-    req0 = endicia.LabelRequest(EndiciaPartnerID, EndiciaAccountID, EndiciaPassphrase, package_intl, shipper, recipient_intl, contents_type='Merchandise', customs_info=customs, debug=debug)
+    # req0 = endicia.LabelRequest(EndiciaPartnerID, EndiciaAccountID, EndiciaPassphrase, package_intl, shipper, recipient_intl, contents_type='Merchandise', customs_info=None, debug=debug)
     req1 = endicia.LabelRequest(EndiciaPartnerID, EndiciaAccountID, EndiciaPassphrase, package, shipper, recipient, debug=debug)
-    req2 = endicia.LabelRequest(EndiciaPartnerID, EndiciaAccountID, EndiciaPassphrase, package, shipper, recipient, stealth=False, debug=debug)
-    req3 = endicia.LabelRequest(EndiciaPartnerID, EndiciaAccountID, EndiciaPassphrase, package, shipper, recipient, insurance='ENDICIA', insurance_amount=1.0, debug=debug)
-    req4 = endicia.LabelRequest(EndiciaPartnerID, EndiciaAccountID, EndiciaPassphrase, package, shipper, recipient, customs_form='Form2976A', customs_info=customs, contents_type='Merchandise', debug=debug)
+    # req2 = endicia.LabelRequest(EndiciaPartnerID, EndiciaAccountID, EndiciaPassphrase, package, shipper, recipient, stealth=False, debug=debug)
+    # req3 = endicia.LabelRequest(EndiciaPartnerID, EndiciaAccountID, EndiciaPassphrase, package, shipper, recipient, insurance='ENDICIA', insurance_amount=1.0, debug=debug)
+    # req4 = endicia.LabelRequest(EndiciaPartnerID, EndiciaAccountID, EndiciaPassphrase, package, shipper, recipient, customs_form='Form2976A', customs_info=None, contents_type='Merchandise', debug=debug)
 
-    for request in [ req0, req1, req2, req3, req4 ]:
+    for request in [ req1 ]:
         response = request.send()
 
         print response
         if not isinstance(response, endicia.Error):
-            _show_file(extension='.png', data=response.label)
+            tracking = response.tracking
+            print 'tracking: %s' % tracking
+
+            postage = response.postage
+            print 'postage: %s' % postage
+
+            label = response.label
+            print 'image: %s' % label
+
+            path = get_document_image_path()
+
+            createdFile = save_file(filename=path, extension='.gif', data=label)
+            print 'created the UPS image at ' + createdFile
+                            # _show_file(extension='.png', data=response.label)
 
     return response
 
 def TestEndicia():
     debug = True
 
-    # TestEndiciaLabel()
+    TestEndiciaLabel()
 
     # Rate
-    packages = [ Package(20.0 * 16, 12, 12, 12, value=100) ]
-
-    en = endicia.Endicia(EndiciaConfig)
-    for shape in endicia.Package.shapes:
-        try:
-            response = en.rate(packages, shape, shipper, recipient)
-            print response
-        except endicia.EndiciaError as e:
-            print e
+    # packages = [ Package(20.0 * 16, 12, 12, 12, value=100) ]
+    #
+    # en = endicia.Endicia(EndiciaConfig)
+    # for shape in endicia.Package.shapes:
+    #     try:
+    #         response = en.rate(packages, shape, shipper, recipient)
+    #         print response
+    #     except endicia.EndiciaError as e:
+    #         print e
 
     # # Account Status
     # request = endicia.AccountStatusRequest(EndiciaPartnerID, EndiciaAccountID, EndiciaPassphrase, debug=debug)
@@ -398,9 +423,9 @@ def TestFedex():
             print e
 
 if __name__ == '__main__':
-    TestUPS()
+    #TestUPS()
     #TestUSPS()
-    # TestEndicia()
+    TestEndicia()
     #TestFedex()
     #TestFedexGroundCertification()
     #TestFedexExpressCertification()

@@ -44,8 +44,8 @@ class TestEndicia(unittest.TestCase):
             endicia.Package.shapes[3], 10, 10, 10
         )
         customs = [
-            endicia.Customs('Thing 1', 1, 2, 100, 'United States'),
-            endicia.Customs('Thing 2', 10, 16, 80, 'Canada')
+            endicia.customs('Thing 1', 1, 2, 100, 'United States'),
+            endicia.customs('Thing 2', 10, 16, 80, 'Canada')
         ]
         label = self.api.label(package_intl, self.shipper, self.intl_recipient,
             contents_type='Merchandise', customs_info=customs,
@@ -86,7 +86,7 @@ class TestEndicia(unittest.TestCase):
     # request = endicia.AccountStatusRequest(EndiciaPartnerID, EndiciaAccountID, EndiciaPassphrase, debug=debug)
     # response = request.send()
     # print response
-    
+
     # # Recredit
     # request = endicia.RecreditRequest(EndiciaPartnerID, EndiciaAccountID, EndiciaPassphrase, 10.00, debug=debug)
     # response = request.send()
